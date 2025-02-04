@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/EndlessCheng/mahjong-helper/util"
 	"fmt"
 	"strings"
-	"github.com/fatih/color"
+
+	"github.com/EndlessCheng/mahjong-helper/util"
 	"github.com/EndlessCheng/mahjong-helper/util/model"
+	"github.com/fatih/color"
 )
 
 func simpleBestDiscardTile(playerInfo *model.PlayerInfo) int {
@@ -18,7 +19,7 @@ func simpleBestDiscardTile(playerInfo *model.PlayerInfo) int {
 	} else {
 		return -1
 	}
-	if shanten == 1 && len(playerInfo.DiscardTiles) < 9 && len(results14) > 0 && len(incShantenResults14) > 0 && !playerInfo.IsNaki() { // 鸣牌时的向听倒退暂不考虑
+	if shanten == 1 && len(playerInfo.DiscardTiles) < 9 && len(results14) > 0 && len(incShantenResults14) > 0 && !playerInfo.IsNaki() { // 鳴きの際の向聴戻りは一時的に考慮しない
 		if results14[0].Result13.Waits.AllCount() < 9 && results14[0].Result13.MixedWaitsScore < incShantenResults14[0].Result13.MixedWaitsScore {
 			bestAttackDiscardTile = incShantenResults14[0].DiscardTile
 		}
@@ -26,7 +27,7 @@ func simpleBestDiscardTile(playerInfo *model.PlayerInfo) int {
 	return bestAttackDiscardTile
 }
 
-// TODO: 重构至 model
+// TODO: model へリファクタリング
 func humanMeld(meld model.Meld) string {
 	humanMeld := util.TilesToStr(meld.Tiles)
 	if meld.MeldType == model.MeldTypeAnkan {
@@ -55,7 +56,7 @@ func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTab
 	switch countOfTiles % 3 {
 	case 1:
 		result := util.CalculateShantenWithImproves13(playerInfo)
-		fmt.Println("当前" + util.NumberToChineseShanten(result.Shanten) + "：")
+		fmt.Println("現在" + util.NumberToChineseShanten(result.Shanten) + "：")
 		r := &analysisResult{
 			discardTile34:  -1,
 			result13:       result,
@@ -63,34 +64,34 @@ func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTab
 		}
 		r.printWaitsWithImproves13_oneRow()
 	case 2:
-		// 分析手牌
+		// 手牌分析
 		shanten, results14, incShantenResults14 := util.CalculateShantenWithImproves14(playerInfo)
 
-		// 提示信息
+		// 提案情報
 		if shanten == -1 {
-			color.HiRed("【已和牌】")
+			color.HiRed("【和了】")
 		} else if shanten == 0 {
 			if len(results14) > 0 {
 				r13 := results14[0].Result13
 				if r13.RiichiPoint > 0 && r13.FuritenRate == 0 && r13.DamaPoint >= 5200 && r13.DamaWaits.AllCount() == r13.Waits.AllCount() {
-					color.HiGreen("Sufficient points for silent tenpai: aim for tenpai silently, aim for points with riichi")
+					color.HiGreen("点数が十分なダマテン：ダマテンを狙う、リーチで点数を狙う")
 				}
-				// 局收支相近时，提示：局收支相近，追求和率打xx，追求打点打xx
+				// 局収支が近い場合、提案：局収支が近い、和了率を追求するならxx、点数を追求するならxx
 			}
 		} else if shanten == 1 {
-			// 早巡中巡门清时，提醒向听倒退
+			// 序盤・中盤の門前で、向聴戻りを注意
 			if len(playerInfo.DiscardTiles) < 9 && !playerInfo.IsNaki() {
 				alertBackwardToShanten2(results14, incShantenResults14)
 			}
 		}
 
-		// TODO: 接近流局时提示河底是哪家
+		// TODO: 流局に近い場合、河底が誰かを提示
 
-		// 何切分析结果
+		// 何切る分析結果
 		printResults14WithRisk(results14, mixedRiskTable)
 		printResults14WithRisk(incShantenResults14, mixedRiskTable)
 	default:
-		err := fmt.Errorf("参数错误: %d 张牌", countOfTiles)
+		err := fmt.Errorf("パラメータエラー: %d 枚の牌", countOfTiles)
 		if debugMode {
 			panic(err)
 		}
@@ -175,7 +176,7 @@ func analysisHumanTiles(humanTilesInfo *model.HumanTilesInfo) (playerInfo *model
 	}
 
 	if tileCount%3 == 0 {
-		color.HiYellow("%s 是 %d 张牌\n助手随机补了一张牌", humanTilesInfo.HumanTiles, tileCount)
+		color.HiYellow("%s は %d 枚の牌です\nアシスタントがランダムで1枚追加しました", humanTilesInfo.HumanTiles, tileCount)
 		util.RandomAddTile(tiles34)
 	}
 

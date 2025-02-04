@@ -50,8 +50,8 @@ func InStrings(e string, arr []string) bool {
 	return false
 }
 
-// 258m 258p 258s 12345z 在不考虑国士无双和七对子时为八向听
-var chineseShanten = []string{"和了", "听牌", "一向听", "两向听", "三向听", "四向听", "五向听", "六向听", "七向听", "八向听"}
+// 258m 258p 258s 12345z は国士無双と七対子を考慮しない場合、八向聴
+var chineseShanten = []string{"和了", "聴牌", "一向聴", "二向聴", "三向聴", "四向聴", "五向聴", "六向聴", "七向聴", "八向聴"}
 
 // -1=和了，0=和牌，1=一向听，……
 func NumberToChineseShanten(num int) string {

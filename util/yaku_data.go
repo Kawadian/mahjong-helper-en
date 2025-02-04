@@ -11,8 +11,6 @@ func SetConsiderOldYaku(b bool) {
 	considerOldYaku = b
 }
 
-//
-
 const (
 	// https://en.wikipedia.org/wiki/Japanese_Mahjong_yaku
 	// Special criteria
@@ -32,8 +30,8 @@ const (
 	YakuPinfu
 	YakuRyanpeikou
 	YakuIipeikou
-	YakuSanshokuDoujun  // *
-	YakuIttsuu          // *
+	YakuSanshokuDoujun // *
+	YakuIttsuu         // *
 
 	// Yaku based on triplets and/or quads
 	YakuToitoi
@@ -44,14 +42,14 @@ const (
 	// Yaku based on terminal or honor tiles
 	YakuTanyao
 	YakuYakuhai
-	YakuChanta     // * 必须有顺子
-	YakuJunchan    // * 必须有顺子
-	YakuHonroutou  // 七对也算
+	YakuChanta    // * 順子が必要
+	YakuJunchan   // * 順子が必要
+	YakuHonroutou // 七対子も可
 	YakuShousangen
 
 	// Yaku based on suits
-	YakuHonitsu   // *
-	YakuChinitsu  // *
+	YakuHonitsu  // *
+	YakuChinitsu // *
 
 	// Yakuman
 	//YakuKokushi
@@ -70,19 +68,19 @@ const (
 	//YakuTenhou
 	//YakuChiihou
 
-	// 古役
+	// 古い役
 	YakuShiiaruraotai
 	YakuUumensai
 	YakuSanrenkou
 	YakuIsshokusanjun
 
-	// 古役役满
+	// 古い役満
 	YakuDaisuurin
 	YakuDaisharin
 	YakuDaichikurin
 	YakuDaichisei
 
-	//_endYakuType  // 标记 enum 结束，方便计算有多少个 YakuType
+	//_endYakuType  // enumの終わりをマークし、YakuTypeの数を計算しやすくする
 )
 
 //const maxYakuType = _endYakuType
@@ -90,36 +88,36 @@ const (
 var YakuNameMap = map[int]string{
 	// Special criteria
 	YakuRiichi:  "立直",
-	YakuChiitoi: "七对",
+	YakuChiitoi: "七対子",
 
 	// Yaku based on luck
-	YakuTsumo: "自摸",
-	//YakuIppatsu: "一发",
-	//YakuHaitei:  "海底",
-	//YakuHoutei:  "河底",
-	//YakuRinshan: "岭上",
-	//YakuChankan: "抢杠",
-	YakuDaburii: "w立",
+	YakuTsumo: "ツモ",
+	//YakuIppatsu: "一発",
+	//YakuHaitei:  "海底撈月",
+	//YakuHoutei:  "河底撈魚",
+	//YakuRinshan: "嶺上開花",
+	//YakuChankan: "槍槓",
+	YakuDaburii: "ダブル立直",
 
 	// Yaku based on sequences
 	YakuPinfu:          "平和",
-	YakuRyanpeikou:     "两杯口",
-	YakuIipeikou:       "一杯口",
-	YakuSanshokuDoujun: "三色",
-	YakuIttsuu:         "一通", // 一气
+	YakuRyanpeikou:     "二盃口",
+	YakuIipeikou:       "一盃口",
+	YakuSanshokuDoujun: "三色同順",
+	YakuIttsuu:         "一気通貫",
 
 	// Yaku based on triplets and/or quads
-	YakuToitoi:         "对对",
+	YakuToitoi:         "対々和",
 	YakuSanAnkou:       "三暗刻",
 	YakuSanshokuDoukou: "三色同刻",
-	YakuSanKantsu:      "三杠子",
+	YakuSanKantsu:      "三槓子",
 
 	// Yaku based on terminal or honor tiles
-	YakuTanyao:     "断幺",
+	YakuTanyao:     "タンヤオ",
 	YakuYakuhai:    "役牌",
-	YakuChanta:     "混全",
-	YakuJunchan:    "纯全",
-	YakuHonroutou:  "混老头", // 七对也算
+	YakuChanta:     "混全帯幺九",
+	YakuJunchan:    "純全帯幺九",
+	YakuHonroutou:  "混老頭",
 	YakuShousangen: "小三元",
 
 	// Yaku based on suits
@@ -127,38 +125,38 @@ var YakuNameMap = map[int]string{
 	YakuChinitsu: "清一色",
 
 	// Yakuman
-	//YakuKokushi:       "国士",
-	//YakuKokushi13:     "国士十三面",
+	//YakuKokushi:       "国士無双",
+	//YakuKokushi13:     "国士無双十三面",
 	YakuSuuAnkou:      "四暗刻",
-	YakuSuuAnkouTanki: "四暗刻单骑",
+	YakuSuuAnkouTanki: "四暗刻単騎",
 	YakuDaisangen:     "大三元",
 	YakuShousuushii:   "小四喜",
 	YakuDaisuushii:    "大四喜",
 	YakuTsuuiisou:     "字一色",
-	YakuChinroutou:    "清老头",
-	YakuRyuuiisou:     "绿一色",
-	YakuChuuren:       "九莲",
-	YakuChuuren9:      "纯正九莲",
-	YakuSuuKantsu:     "四杠子",
+	YakuChinroutou:    "清老頭",
+	YakuRyuuiisou:     "緑一色",
+	YakuChuuren:       "九蓮宝燈",
+	YakuChuuren9:      "純正九蓮宝燈",
+	YakuSuuKantsu:     "四槓子",
 	//YakuTenhou:        "天和",
 	//YakuChiihou:       "地和",
 }
 
 var OldYakuNameMap = map[int]string{
-	YakuShiiaruraotai: "十二落抬",
-	YakuUumensai:      "五门齐",
-	YakuSanrenkou:     "三连刻",
-	YakuIsshokusanjun: "一色三顺",
+	YakuShiiaruraotai: "四副露大車",
+	YakuUumensai:      "五門斉",
+	YakuSanrenkou:     "三連刻",
+	YakuIsshokusanjun: "一色三順",
 
-	YakuDaisuurin:   "大数邻",
-	YakuDaisharin:   "大车轮",
+	YakuDaisuurin:   "大数隣",
+	YakuDaisharin:   "大車輪",
 	YakuDaichikurin: "大竹林",
 	YakuDaichisei:   "大七星",
 }
 
 func YakuTypesToStr(yakuTypes []int) string {
 	if len(yakuTypes) == 0 {
-		return "[无役]"
+		return "[役なし]"
 	}
 	names := []string{}
 	for _, t := range yakuTypes {
