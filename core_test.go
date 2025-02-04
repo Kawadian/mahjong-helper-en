@@ -1,11 +1,12 @@
 package main
 
 import (
-	"testing"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strings"
-	"fmt"
-	"encoding/json"
+	"testing"
+
 	"github.com/EndlessCheng/mahjong-helper/util/debug"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ func Test_majsoul_analysis(t *testing.T) {
 
 	lines := strings.Split(string(logData), "\n")
 	if startLo == -1 {
-		// 取最近游戏的日志
+		// 最新のゲームログを取得
 		for i := len(lines) - 1; i >= 0; i-- {
 			if strings.Contains(lines[i], "==============") {
 				startLo = i + 3
