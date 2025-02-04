@@ -1,12 +1,11 @@
 package main
 
 import (
+	"github.com/EndlessCheng/mahjong-helper/util"
 	"fmt"
 	"strings"
-
-	"github.com/EndlessCheng/mahjong-helper/util"
-	"github.com/EndlessCheng/mahjong-helper/util/model"
 	"github.com/fatih/color"
+	"github.com/EndlessCheng/mahjong-helper/util/model"
 )
 
 func simpleBestDiscardTile(playerInfo *model.PlayerInfo) int {
@@ -47,7 +46,7 @@ func humanHands(playerInfo *model.PlayerInfo) string {
 }
 
 func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTable) error {
-	// Hand tiles
+	// 手牌
 	humanTiles := humanHands(playerInfo)
 	fmt.Println(humanTiles)
 	fmt.Println(strings.Repeat("=", len(humanTiles)))
@@ -56,7 +55,7 @@ func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTab
 	switch countOfTiles % 3 {
 	case 1:
 		result := util.CalculateShantenWithImproves13(playerInfo)
-		fmt.Println("Current " + util.NumberToChineseShanten(result.Shanten) + ":")
+		fmt.Println("当前" + util.NumberToChineseShanten(result.Shanten) + "：")
 		r := &analysisResult{
 			discardTile34:  -1,
 			result13:       result,
@@ -64,34 +63,34 @@ func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTab
 		}
 		r.printWaitsWithImproves13_oneRow()
 	case 2:
-		// Analyze hand tiles
+		// 分析手牌
 		shanten, results14, incShantenResults14 := util.CalculateShantenWithImproves14(playerInfo)
 
-		// Prompt information
+		// 提示信息
 		if shanten == -1 {
-			color.HiRed("【Winning Hand】")
+			color.HiRed("【已和牌】")
 		} else if shanten == 0 {
 			if len(results14) > 0 {
 				r13 := results14[0].Result13
 				if r13.RiichiPoint > 0 && r13.FuritenRate == 0 && r13.DamaPoint >= 5200 && r13.DamaWaits.AllCount() == r13.Waits.AllCount() {
 					color.HiGreen("Sufficient points for silent tenpai: aim for tenpai silently, aim for points with riichi")
 				}
-				// When the round income is similar, prompt: similar round income, pursue win rate by discarding xx, pursue points by discarding xx
+				// 局收支相近时，提示：局收支相近，追求和率打xx，追求打点打xx
 			}
 		} else if shanten == 1 {
-			// In early to mid rounds, when closed, remind of backward to shanten 2
+			// 早巡中巡门清时，提醒向听倒退
 			if len(playerInfo.DiscardTiles) < 9 && !playerInfo.IsNaki() {
 				alertBackwardToShanten2(results14, incShantenResults14)
 			}
 		}
 
-		// TODO: Near the end of the round, prompt which player's discard is at the bottom of the river
+		// TODO: 接近流局时提示河底是哪家
 
-		// Discard analysis result
+		// 何切分析结果
 		printResults14WithRisk(results14, mixedRiskTable)
 		printResults14WithRisk(incShantenResults14, mixedRiskTable)
 	default:
-		err := fmt.Errorf("Invalid parameters: %d tiles", countOfTiles)
+		err := fmt.Errorf("参数错误: %d 张牌", countOfTiles)
 		if debugMode {
 			panic(err)
 		}
@@ -102,32 +101,32 @@ func analysisPlayerWithRisk(playerInfo *model.PlayerInfo, mixedRiskTable riskTab
 	return nil
 }
 
-// Analyze meld
-// playerInfo: Player information
-// targetTile34: Opponent's discarded tile
-// isRedFive: Whether the discarded tile is a red five
-// allowChi: Whether chi is allowed
-// mixedRiskTable: Risk table
+// 分析鸣牌
+// playerInfo: 自家信息
+// targetTile34: 他家舍牌
+// isRedFive: 此舍牌是否为赤5
+// allowChi: 是否能吃
+// mixedRiskTable: 危险度表
 func analysisMeld(playerInfo *model.PlayerInfo, targetTile34 int, isRedFive bool, allowChi bool, mixedRiskTable riskTable) error {
 	if handsCount := util.CountOfTiles34(playerInfo.HandTiles34); handsCount%3 != 1 {
-		return fmt.Errorf("Invalid hand: %d tiles %v", handsCount, playerInfo.HandTiles34)
+		return fmt.Errorf("手牌错误：%d 张牌 %v", handsCount, playerInfo.HandTiles34)
 	}
-	// Original hand analysis
+	// 原始手牌分析
 	result := util.CalculateShantenWithImproves13(playerInfo)
-	// Meld analysis
+	// 副露分析
 	shanten, results14, incShantenResults14 := util.CalculateMeld(playerInfo, targetTile34, isRedFive, allowChi)
 	if len(results14) == 0 && len(incShantenResults14) == 0 {
-		return nil // fmt.Errorf("Input error: cannot meld this tile")
+		return nil // fmt.Errorf("输入错误：无法鸣这张牌")
 	}
 
-	// Meld
+	// 鸣牌
 	humanTiles := humanHands(playerInfo)
 	handsTobeNaki := humanTiles + " " + model.SepTargetTile + " " + util.Tile34ToStr(targetTile34) + "?"
 	fmt.Println(handsTobeNaki)
 	fmt.Println(strings.Repeat("=", len(handsTobeNaki)))
 
-	// Original hand analysis result
-	fmt.Println("Current " + util.NumberToChineseShanten(result.Shanten) + ":")
+	// 原始手牌分析结果
+	fmt.Println("当前" + util.NumberToChineseShanten(result.Shanten) + "：")
 	r := &analysisResult{
 		discardTile34:  -1,
 		result13:       result,
@@ -135,20 +134,20 @@ func analysisMeld(playerInfo *model.PlayerInfo, targetTile34 int, isRedFive bool
 	}
 	r.printWaitsWithImproves13_oneRow()
 
-	// Prompt information
-	// TODO: When the round income is similar, prompt: similar round income, pursue win rate by discarding xx, pursue points by discarding xx
+	// 提示信息
+	// TODO: 局收支相近时，提示：局收支相近，追求和率打xx，追求打点打xx
 	if shanten == -1 {
-		color.HiRed("【Winning Hand】")
+		color.HiRed("【已和牌】")
 	} else if shanten <= 1 {
-		// After meld, if in tenpai or one shanten, prompt for shape tenpai
+		// 鸣牌后听牌或一向听，提示型听
 		if len(results14) > 0 && results14[0].LeftDrawTilesCount > 0 && results14[0].LeftDrawTilesCount <= 16 {
-			color.HiGreen("Consider shape tenpai?")
+			color.HiGreen("考虑型听？")
 		}
 	}
 
-	// TODO: Near the end of the round, prompt which player's discard is at the bottom of the river
+	// TODO: 接近流局时提示河底是哪家
 
-	// Meld discard analysis result
+	// 鸣牌何切分析结果
 	printResults14WithRisk(results14, mixedRiskTable)
 	printResults14WithRisk(incShantenResults14, mixedRiskTable)
 	return nil
@@ -172,11 +171,11 @@ func analysisHumanTiles(humanTilesInfo *model.HumanTilesInfo) (playerInfo *model
 
 	tileCount := util.CountOfTiles34(tiles34)
 	if tileCount > 14 {
-		return nil, fmt.Errorf("Input error: %d tiles", tileCount)
+		return nil, fmt.Errorf("输入错误：%d 张牌", tileCount)
 	}
 
 	if tileCount%3 == 0 {
-		color.HiYellow("%s is %d tiles\nA tile was randomly added by the assistant", humanTilesInfo.HumanTiles, tileCount)
+		color.HiYellow("%s 是 %d 张牌\n助手随机补了一张牌", humanTilesInfo.HumanTiles, tileCount)
 		util.RandomAddTile(tiles34)
 	}
 
@@ -198,7 +197,7 @@ func analysisHumanTiles(humanTilesInfo *model.HumanTilesInfo) (playerInfo *model
 		case len(tiles) == 4 && !isUpper:
 			meldType = model.MeldTypeMinkan
 		default:
-			return nil, fmt.Errorf("Input error: %s", humanMeld)
+			return nil, fmt.Errorf("输入错误: %s", humanMeld)
 		}
 		containRedFive := false
 		for i, c := range _numRedFives {
@@ -226,7 +225,7 @@ func analysisHumanTiles(humanTilesInfo *model.HumanTilesInfo) (playerInfo *model
 
 	if humanTilesInfo.HumanTargetTile != "" {
 		if tileCount%3 == 2 {
-			return nil, fmt.Errorf("Input error: %s is %d tiles", humanTilesInfo.HumanTiles, tileCount)
+			return nil, fmt.Errorf("输入错误: %s 是 %d 张牌", humanTilesInfo.HumanTiles, tileCount)
 		}
 		targetTile34, isRedFive, er := util.StrToTile34(humanTilesInfo.HumanTargetTile)
 		if er != nil {

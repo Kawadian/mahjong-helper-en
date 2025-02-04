@@ -11,51 +11,51 @@ import (
 )
 
 func printAccountInfo(accountID int) {
-	fmt.Printf("Your account ID is ")
+	fmt.Printf("あなたのアカウントIDは ")
 	color.New(color.FgHiGreen).Printf("%d", accountID)
-	fmt.Printf(", this number is the ID in the Mahjong Soul server account database, the smaller the value, the earlier your registration time\n")
+	fmt.Printf(" です。この数字は雀魂サーバーのアカウントデータベースのIDで、この値が小さいほど登録時間が早いことを示します。\n")
 }
 
 //
 
 func (p *playerInfo) printDiscards() {
-	// TODO: Highlight unreasonable or dangerous discards, such as
-	// - Discarding middle tiles at the beginning
-	// - After starting to discard middle tiles, discarding terminal tiles (it could also be because someone called a tile, e.g., 133m someone called 2m)
-	// - Discarding dora, give a reminder
-	// - Discarding red dora
-	// - When someone declares riichi, repeatedly discarding dangerous tiles (it could be that the opponent has read the tiles correctly, or the tiles in the opponent's hand and the river tiles combined create safe tiles)
-	// - Refer to the translation of "Demon God's Eye" on Tieba for more details https://tieba.baidu.com/p/3311909701
-	//      For example, if a pair is discarded early, it is unlikely to be a seven pairs hand.
-	//      If the opponent discards a two-sided wait early, it can be inferred that they are going for a flush or a pair-based hand. If they declare riichi or call a tile, it is easier to read their hand.
+	// TODO: 不合理な捨て牌や危険な捨て牌をハイライトする
+	// - 最初から中張牌を切る
+	// - 中張牌を切った後、幺九牌を手切りする（例えば133mで2mをポンされた場合）
+	// - ドラを切る、警告する
+	// - 赤宝牌を切る
+	// - 誰かがリーチしている場合、何度も危険度の高い牌を切る（相手が牌を読んでいる可能性がある、または相手の手牌と牌河が合わさって安牌ができる）
+	// - その他は掲示板の「魔神の目」の翻訳を参考にする https://tieba.baidu.com/p/3311909701
+	//      例えば、手切りで対子を切った場合、基本的に七対子ではないことがわかります。
+	//      もし相手が早巡で両面搭子を手切りした場合、染め手を狙っているか、対子型の手牌であることが推測できます。リーチや鳴きが入った場合も、手牌を読みやすくなります。
 	// https://tieba.baidu.com/p/3311909701
-	//      Remember the tiles discarded after calling and in the late game, discard the safe tiles before the opponent discards them
+	//      鳴きの後や終盤の手切り牌を覚えておくべきで、他人の手切り前の安牌を先に切るべきです。
 	// https://tieba.baidu.com/p/3372239806
-	//      The tiles discarded when calling are dangerous; all tiles discarded after calling are dangerous
+	//      鳴きの際に打ち出された牌の色は危険です。ポンの後はすべての牌が危険です。
 
 	fmt.Printf(p.name + ":")
 	for i, disTile := range p.discardTiles {
 		fmt.Printf(" ")
-		// TODO: Display dora, red dora
+		// TODO: ドラ、赤宝牌を表示する
 		bgColor := color.BgBlack
 		fgColor := color.FgWhite
 		var tile string
-		if disTile >= 0 { // Hand discard
+		if disTile >= 0 { // 手切り
 			tile = util.Mahjong[disTile]
 			if disTile >= 27 {
-				tile = util.MahjongU[disTile] // Pay attention to hand discards of honor tiles
+				tile = util.MahjongU[disTile] // 字牌の手切りに注目
 			}
-			if p.isNaki { // Open meld
-				fgColor = getOtherDiscardAlertColor(disTile) // Highlight middle tile hand discards
+			if p.isNaki { // 副露
+				fgColor = getOtherDiscardAlertColor(disTile) // 中張牌の手切りをハイライト
 				if util.InInts(i, p.meldDiscardsAt) {
-					bgColor = color.BgWhite // Highlight the background of the tile discarded when calling
+					bgColor = color.BgWhite // 鳴きの際に切った牌は背景をハイライト
 					fgColor = color.FgBlack
 				}
 			}
-		} else { // Draw discard
+		} else { // 摸切り
 			disTile = ^disTile
 			tile = util.Mahjong[disTile]
-			fgColor = color.FgHiBlack // Display in dark color
+			fgColor = color.FgHiBlack // 暗色表示
 		}
 		color.New(bgColor, fgColor).Print(tile)
 	}
@@ -69,11 +69,11 @@ type handsRisk struct {
 	risk float64
 }
 
-// Risk level of 34 types of tiles
+// 34種類の牌の危険度
 type riskTable util.RiskTiles34
 
 func (t riskTable) printWithHands(hands []int, fixedRiskMulti float64) (containLine bool) {
-	// Print tiles with a risk of 0 (safe tiles, or NC with remaining count = 0)
+	// 鋳率=0の牌を表示する（現物、またはNCで残り数=0）
 	safeCount := 0
 	for i, c := range hands {
 		if c > 0 && t[i] == 0 {
@@ -82,7 +82,7 @@ func (t riskTable) printWithHands(hands []int, fixedRiskMulti float64) (containL
 		}
 	}
 
-	// Print dangerous tiles, sorted by risk & highlighted
+	// 危険牌を表示し、鋳率でソート＆ハイライト
 	handsRisks := []handsRisk{}
 	for i, c := range hands {
 		if c > 0 && t[i] > 0 {
@@ -98,7 +98,7 @@ func (t riskTable) printWithHands(hands []int, fixedRiskMulti float64) (containL
 			containLine = true
 		}
 		for _, hr := range handsRisks {
-			// Color considers the tenpai rate
+			// 色は聴牌率を考慮
 			color.New(getNumRiskColor(hr.risk * fixedRiskMulti)).Printf(" " + util.MahjongZH[hr.tile])
 		}
 	}
@@ -131,34 +131,34 @@ func (t riskTable) getBestDefenceTile(tiles34 []int) (result int) {
 //
 
 type riskInfo struct {
-	// 3 players for three-player mahjong, 4 players for four-player mahjong
+	// 三麻は3、四麻は4
 	playerNumber int
 
-	// Tenpai rate of the player (100.0 when declaring riichi)
+	// このプレイヤーの聴牌率（リーチ時は100.0）
 	tenpaiRate float64
 
-	// Safe tiles of the player
-	// If the player has a kan operation, the kan tile is also considered a safe tile, which helps in determining the danger level of suji tiles
+	// このプレイヤーの安牌
+	// このプレイヤーが槓操作を行った場合、その槓の牌も安牌と見なす。これは筋壁の危険度を判断するのに役立つ。
 	safeTiles34 []bool
 
-	// Risk table of various tiles
+	// 各種牌の鋳率表
 	riskTable riskTable
 
-	// Remaining no suji 123789
-	// A total of 18 types. The fewer remaining no suji tiles, the more dangerous the no suji tile
+	// 残り無筋123789
+	// 合計18種類。残り無筋牌の数が少ないほど、その無筋牌は危険。
 	leftNoSujiTiles []int
 
-	// Whether it is a tsumogiri riichi
+	// 摸切りリーチかどうか
 	isTsumogiriRiichi bool
 
-	// Ron points
-	// For debugging purposes only
+	// 栄和点数
+	// デバッグ用
 	_ronPoint float64
 }
 
 type riskInfoList []*riskInfo
 
-// Comprehensive risk level considering the tenpai rate
+// 聴牌率を考慮した総合危険度
 func (l riskInfoList) mixedRiskTable() riskTable {
 	mixedRiskTable := make(riskTable, 34)
 	for i := range mixedRiskTable {
@@ -176,7 +176,7 @@ func (l riskInfoList) mixedRiskTable() riskTable {
 }
 
 func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
-	// Print the risk level if the tenpai rate exceeds a certain value
+	// 聴牌率が一定値を超えたら鋳率を表示
 	const (
 		minShownTenpaiRate4 = 50.0
 		minShownTenpaiRate3 = 20.0
@@ -188,19 +188,19 @@ func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
 	}
 
 	dangerousPlayerCount := 0
-	// Print safe tiles and dangerous tiles
-	names := []string{"", "Lower player", "Opposite player", "Upper player"}
+	// 安牌、危険牌を表示
+	names := []string{"", "下家", "対面", "上家"}
 	for i := len(l) - 1; i >= 1; i-- {
 		tenpaiRate := l[i].tenpaiRate
 		if len(l[i].riskTable) > 0 && (debugMode || tenpaiRate > minShownTenpaiRate) {
 			dangerousPlayerCount++
-			fmt.Print(names[i] + " safe tiles:")
+			fmt.Print(names[i] + "安牌:")
 			//if debugMode {
-			//fmt.Printf("(%d*%2.2f%% tenpai rate)", int(l[i]._ronPoint), l[i].tenpaiRate)
+			//fmt.Printf("(%d*%2.2f%%聴牌率)", int(l[i]._ronPoint), l[i].tenpaiRate)
 			//}
 			containLine := l[i].riskTable.printWithHands(hands, tenpaiRate/100)
 
-			// Print tenpai rate
+			// 聴牌率を表示
 			fmt.Print(" ")
 			if !containLine {
 				fmt.Print("  ")
@@ -211,32 +211,32 @@ func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
 			} else {
 				fmt.Printf("%4.1f%%", tenpaiRate)
 			}
-			fmt.Print(" tenpai rate]")
+			fmt.Print("聴牌率]")
 
-			// Print the number of no suji tiles
+			// 無筋の数を表示
 			fmt.Print(" ")
 			const badMachiLimit = 3
 			noSujiInfo := ""
 			if l[i].isTsumogiriRiichi {
-				noSujiInfo = "Tsumogiri riichi"
+				noSujiInfo = "摸切りリーチ"
 			} else if len(l[i].leftNoSujiTiles) == 0 {
-				noSujiInfo = "Bad wait/Chombo"
+				noSujiInfo = "愚形聴牌/振聴"
 			} else if len(l[i].leftNoSujiTiles) <= badMachiLimit {
-				noSujiInfo = "Possible bad wait/Chombo"
+				noSujiInfo = "可能性のある愚形聴牌/振聴"
 			}
 			if noSujiInfo != "" {
-				fmt.Printf("[%d no suji: ", len(l[i].leftNoSujiTiles))
+				fmt.Printf("[%d無筋: ", len(l[i].leftNoSujiTiles))
 				color.New(color.FgHiYellow).Printf("%s", noSujiInfo)
 				fmt.Print("]")
 			} else {
-				fmt.Printf("[%d no suji]", len(l[i].leftNoSujiTiles))
+				fmt.Printf("[%d無筋]", len(l[i].leftNoSujiTiles))
 			}
 
 			fmt.Println()
 		}
 	}
 
-	// If more than one player declares riichi or calls a tile, print the weighted comprehensive risk level (considering the tenpai rate)
+	// 複数のプレイヤーがリーチ/副露している場合、加重総合鋳率を表示（聴牌率を考慮）
 	mixedPlayers := 0
 	for _, ri := range l[1:] {
 		if ri.tenpaiRate > 0 {
@@ -244,14 +244,14 @@ func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
 		}
 	}
 	if dangerousPlayerCount > 0 && mixedPlayers > 1 {
-		fmt.Print("Comprehensive safe tiles:")
+		fmt.Print("総合安牌:")
 		mixedRiskTable := l.mixedRiskTable()
 		mixedRiskTable.printWithHands(hands, 1)
 		fmt.Println()
 	}
 
-	// Print safe tiles generated by NC and OC
-	// TODO: Refactor to another function
+	// NC OCによる安牌を表示
+	// TODO: 他の関数にリファクタリング
 	if dangerousPlayerCount > 0 {
 		ncSafeTileList := util.CalcNCSafeTiles(leftCounts).FilterWithHands(hands)
 		ocSafeTileList := util.CalcOCSafeTiles(leftCounts).FilterWithHands(hands)
@@ -270,7 +270,7 @@ func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
 			fmt.Println()
 		}
 
-		// The following is another display method: displaying wall tiles
+		// 以下は別の表示方法：壁牌を表示
 		//printedNC := false
 		//for i, c := range leftCounts[:27] {
 		//	if c != 0 || i%9 == 0 || i%9 == 8 {
@@ -304,7 +304,6 @@ func (l riskInfoList) printWithHands(hands []int, leftCounts []int) {
 }
 
 //
-
 func alertBackwardToShanten2(results util.Hand14AnalysisResultList, incShantenResults util.Hand14AnalysisResultList) {
 	if len(results) == 0 || len(incShantenResults) == 0 {
 		return
@@ -312,12 +311,12 @@ func alertBackwardToShanten2(results util.Hand14AnalysisResultList, incShantenRe
 
 	if results[0].Result13.Waits.AllCount() < 9 {
 		if results[0].Result13.MixedWaitsScore < incShantenResults[0].Result13.MixedWaitsScore {
-			color.HiGreen("Backward to shanten?")
+			color.HiGreen("向聴戻り?")
 		}
 	}
 }
 
-// Yaku types to alert
+// 注意が必要な役種
 var yakuTypesToAlert = []int{
 	//util.YakuKokushi,
 	//util.YakuKokushi13,
@@ -361,17 +360,17 @@ var yakuTypesToAlert = []int{
 
 /*
 
-8     Discard 3s Wait [2m, 7m]
-9.20  [20 Improvement]  4.00 Wait count
+8     切 3索 待ち[2万, 7万]
+9.20  [20 改良]  4.00 聴牌数
 
-4     Wait [2m, 7m]
-4.50  [ 4 Improvement]  55.36% Reference win rate
+4     待ち [2万, 7万]
+4.50  [ 4 改良]  55.36% 参考和了率
 
-8     Call 45m, discard 4m Wait [2m, 7m]
-9.20  [20 Improvement]  4.00 Wait count
+8     45万チー,切 4万 待ち[2万, 7万]
+9.20  [20 改良]  4.00 聴牌数
 
 */
-// Print hand analysis results (two rows)
+// 何切分析結果を表示（2行）
 func printWaitsWithImproves13_twoRows(result13 *util.Hand13AnalysisResult, discardTile34 int, openTiles34 []int) {
 	shanten := result13.Shanten
 	waits := result13.Waits
@@ -381,33 +380,22 @@ func printWaitsWithImproves13_twoRows(result13 *util.Hand13AnalysisResult, disca
 	color.New(c).Printf("%-6d", waitsCount)
 	if discardTile34 != -1 {
 		if len(openTiles34) > 0 {
-			meldType := "Call"
+			meldType := "チー"
 			if openTiles34[0] == openTiles34[1] {
-				meldType = "Pong"
+				meldType = "ポン"
 			}
 			color.New(color.FgHiWhite).Printf("%s%s", string([]rune(util.MahjongZH[openTiles34[0]])[:1]), util.MahjongZH[openTiles34[1]])
-			fmt.Printf("%s, ", meldType)
+			fmt.Printf("%s,", meldType)
 		}
-		fmt.Print("Discard ")
+		fmt.Print("切 ")
 		fmt.Print(util.MahjongZH[discardTile34])
 		fmt.Print(" ")
 	}
-	//fmt.Print("Wait")
-	//if shanten <= 1 {
-	//	fmt.Print("[")
-	//	if len(waitTiles) > 0 {
-	//		fmt.Print(util.MahjongZH[waitTiles[0]])
-	//		for _, idx := range waitTiles[1:] {
-	//			fmt.Print(", " + util.MahjongZH[idx])
-	//		}
-	//	}
-	//	fmt.Println("]")
-	//} else {
+
 	fmt.Println(util.TilesToStrWithBracket(waitTiles))
-	//}
 
 	if len(result13.Improves) > 0 {
-		fmt.Printf("%-6.2f[%2d Improvement]", result13.AvgImproveWaitsCount, len(result13.Improves))
+		fmt.Printf("%-6.2f[%2d 改良]", result13.AvgImproveWaitsCount, len(result13.Improves))
 	} else {
 		fmt.Print(strings.Repeat(" ", 15))
 	}
@@ -419,27 +407,23 @@ func printWaitsWithImproves13_twoRows(result13 *util.Hand13AnalysisResult, disca
 		color.New(c).Printf("%5.2f", result13.AvgNextShantenWaitsCount)
 		fmt.Printf(" %s", util.NumberToChineseShanten(shanten-1))
 		if shanten >= 2 {
-			fmt.Printf("Waits")
+			fmt.Printf("進張")
 		} else { // shanten == 1
-			fmt.Printf("Count")
+			fmt.Printf("数")
 			if showAgariAboveShanten1 {
-				fmt.Printf("（%.2f%% Reference win rate）", result13.AvgAgariRate)
+				fmt.Printf("（%.2f%% 参考和了率）", result13.AvgAgariRate)
 			}
 		}
 		if showScore {
 			mixedScore := result13.MixedWaitsScore
-			//for i := 2; i <= shanten; i++ {
-			//	mixedScore /= 4
-			//}
-			fmt.Printf("（%.2f Comprehensive score）", mixedScore)
+			fmt.Printf("（%.2f 総合点）", mixedScore)
 		}
 	} else { // shanten == 0
-		fmt.Printf("%5.2f%% Reference win rate", result13.AvgAgariRate)
+		fmt.Printf("%5.2f%% 参考和了率", result13.AvgAgariRate)
 	}
 
 	fmt.Println()
 }
-
 type analysisResult struct {
 	discardTile34     int
 	isDiscardTileDora bool
@@ -453,19 +437,18 @@ type analysisResult struct {
 }
 
 /*
-4[ 4.56] Discard 8p => 44.50% Reference win rate [ 4 Improvement] [7p 7s] [Silent 2000] [Sanshoku] [Chombo]
+4[ 4.56] 切 8饼 => 44.50% 参考和率[ 4 改良] [7p 7s] [默听2000] [三色] [振听]
 
-4[ 4.56] Discard 8p => 0.00% Reference win rate [ 4 Improvement] [7p 7s] [No yaku]
+4[ 4.56] 切 8饼 => 0.00% 参考和率[ 4 改良] [7p 7s] [无役]
 
-31[33.58] Discard 7s =>  5.23 Wait count [19.21 Speed] [16 Improvement] [6789p 56789s] [Round income 3120] [Possible chombo]
+31[33.58] 切7索 =>  5.23听牌数 [19.21速度] [16改良] [6789p 56789s] [局收支3120] [可能振听]
 
-48[50.64] Discard 5p => 24.25 One shanten [12 Improvement] [123456789p 56789s]
+48[50.64] 切5饼 => 24.25一向听 [12改良] [123456789p 56789s]
 
-31[33.62] Call 77s, discard 5p => 5.
-
+31[33.62] 77索碰,切5饼 => 5.48听牌数 [15 改良] [123456789p]
 
 */
-// Print hand analysis results (single row)
+// 何切分析結果を表示（1行）
 func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 	discardTile34 := r.discardTile34
 	openTiles34 := r.openTiles34
@@ -473,11 +456,11 @@ func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 
 	shanten := result13.Shanten
 
-	// Number of waits
+	// 進張数
 	waitsCount := result13.Waits.AllCount()
 	c := getWaitsCountColor(shanten, float64(waitsCount))
 	color.New(c).Printf("%2d", waitsCount)
-	// Average number of improvements
+	// 改良進張均値
 	if len(result13.Improves) > 0 {
 		if r.highlightAvgImproveWaitsCount {
 			color.New(color.FgHiWhite).Printf("[%5.2f]", result13.AvgImproveWaitsCount)
@@ -490,29 +473,28 @@ func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 
 	fmt.Print(" ")
 
-	// Whether it is a 3k+2 tile analysis
+	// 鳴き分析
 	if discardTile34 != -1 {
-		// Meld analysis
 		if len(openTiles34) > 0 {
-			meldType := "Chii"
+			meldType := "チー"
 			if openTiles34[0] == openTiles34[1] {
-				meldType = "Pong"
+				meldType = "ポン"
 			}
 			color.New(color.FgHiWhite).Printf("%s%s", string([]rune(util.MahjongZH[openTiles34[0]])[:1]), util.MahjongZH[openTiles34[1]])
 			fmt.Printf("%s,", meldType)
 		}
-		// Discard tile
+		// 捨て牌
 		if r.isDiscardTileDora {
-			color.New(color.FgHiWhite).Print("Dora")
+			color.New(color.FgHiWhite).Print("ドラ")
 		} else {
-			fmt.Print("Discard")
+			fmt.Print("切")
 		}
 		tileZH := util.MahjongZH[discardTile34]
 		if discardTile34 >= 27 {
 			tileZH = " " + tileZH
 		}
 		if r.mixedRiskTable != nil {
-			// If there is an actual risk, display the discard risk based on the actual risk
+			// 実際の危険度に基づいて捨て牌の危険度を表示
 			risk := r.mixedRiskTable[discardTile34]
 			if risk == 0 {
 				fmt.Print(tileZH)
@@ -527,63 +509,63 @@ func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 	fmt.Print(" => ")
 
 	if shanten >= 1 {
-		// Average number of waits after advancing
+		// 次の進張数の平均
 		incShanten := shanten - 1
 		c := getWaitsCountColor(incShanten, result13.AvgNextShantenWaitsCount)
 		color.New(c).Printf("%5.2f", result13.AvgNextShantenWaitsCount)
 		fmt.Printf("%s", util.NumberToChineseShanten(incShanten))
 		if incShanten >= 1 {
-			//fmt.Printf("Waits")
+			//fmt.Printf("進張")
 		} else { // incShanten == 0
-			fmt.Printf("Count")
+			fmt.Printf("数")
 			//if showAgariAboveShanten1 {
-			//	fmt.Printf("（%.2f%% Reference win rate）", result13.AvgAgariRate)
+			//	fmt.Printf("（%.2f%% 参考和率）", result13.AvgAgariRate)
 			//}
 		}
 	} else { // shanten == 0
-		// Reference win rate after advancing
-		// If furiten or partial wait, mark in red
+		// 和了率
+		// 振聴や片聴の場合は赤で表示
 		if result13.FuritenRate == 1 || result13.IsPartWait {
-			color.New(color.FgHiRed).Printf("%5.2f%% Reference win rate", result13.AvgAgariRate)
+			color.New(color.FgHiRed).Printf("%5.2f%% 参考和率", result13.AvgAgariRate)
 		} else {
-			fmt.Printf("%5.2f%% Reference win rate", result13.AvgAgariRate)
+			fmt.Printf("%5.2f%% 参考和率", result13.AvgAgariRate)
 		}
 	}
 
-	// Hand speed, used for quick rounds
+	// 手牌速度、素早く局を進めるため
 	if result13.MixedWaitsScore > 0 && shanten >= 1 && shanten <= 2 {
 		fmt.Print(" ")
 		if r.highlightMixedScore {
-			color.New(color.FgHiWhite).Printf("[%5.2f Speed]", result13.MixedWaitsScore)
+			color.New(color.FgHiWhite).Printf("[%5.2f速度]", result13.MixedWaitsScore)
 		} else {
-			fmt.Printf("[%5.2f Speed]", result13.MixedWaitsScore)
+			fmt.Printf("[%5.2f速度]", result13.MixedWaitsScore)
 		}
 	}
 
-	// Round income
+	// 局収支
 	if showScore && result13.MixedRoundPoint != 0.0 {
 		fmt.Print(" ")
-		color.New(color.FgHiGreen).Printf("[Round income %4d]", int(math.Round(result13.MixedRoundPoint)))
+		color.New(color.FgHiGreen).Printf("[局収支%4d]", int(math.Round(result13.MixedRoundPoint)))
 	}
 
-	// (Silent) Ron points
+	// (ツモ)栄和点数
 	if result13.DamaPoint > 0 {
 		fmt.Print(" ")
-		ronType := "Ron"
+		ronType := "栄和"
 		if !result13.IsNaki {
-			ronType = "Silent"
+			ronType = "ツモ"
 		}
-		color.New(color.FgHiGreen).Printf("[%s %d]", ronType, int(math.Round(result13.DamaPoint)))
+		color.New(color.FgHiGreen).Printf("[%s%d]", ronType, int(math.Round(result13.DamaPoint)))
 	}
 
-	// Riichi points, considering tsumo, ippatsu, ura dora
+	// リーチ点数、自摸、一発、裏ドラを考慮
 	if result13.RiichiPoint > 0 {
 		fmt.Print(" ")
-		color.New(color.FgHiGreen).Printf("[Riichi %d]", int(math.Round(result13.RiichiPoint)))
+		color.New(color.FgHiGreen).Printf("[リーチ%d]", int(math.Round(result13.RiichiPoint)))
 	}
 
 	if len(result13.YakuTypes) > 0 {
-		// Yaku types (displayed within two shanten)
+		// 役種（2向聴以内で表示）
 		if result13.Shanten <= 2 {
 			if !showAllYakuTypes && !debugMode {
 				shownYakuTypes := []int{}
@@ -600,44 +582,44 @@ func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 					color.New(color.FgHiGreen).Printf(util.YakuTypesToStr(shownYakuTypes))
 				}
 			} else {
-				// debug
+				// デバッグ
 				fmt.Print(" ")
 				color.New(color.FgHiGreen).Printf(util.YakuTypesWithDoraToStr(result13.YakuTypes, result13.DoraCount))
 			}
-			// Partial wait
+			// 片面待ち
 			if result13.IsPartWait {
 				fmt.Print(" ")
-				color.New(color.FgHiRed).Printf("[Partial wait]")
+				color.New(color.FgHiRed).Printf("[片面待ち]")
 			}
 		}
 	} else if result13.IsNaki && shanten >= 0 && shanten <= 2 {
-		// No yaku alert when calling (from tenpai to two shanten)
+		// 鳴き時の無役提示（聴牌から2向聴まで）
 		fmt.Print(" ")
-		color.New(color.FgHiRed).Printf("[No yaku]")
+		color.New(color.FgHiRed).Printf("[無役]")
 	}
 
-	// Furiten alert
+	// フリテン表示
 	if result13.FuritenRate > 0 {
 		fmt.Print(" ")
 		if result13.FuritenRate < 1 {
-			color.New(color.FgHiYellow).Printf("[Possible furiten]")
+			color.New(color.FgHiYellow).Printf("[フリテンの可能性]")
 		} else {
-			color.New(color.FgHiRed).Printf("[Furiten]")
+			color.New(color.FgHiRed).Printf("[フリテン]")
 		}
 	}
 
-	// Number of improvements
+	// 改良数
 	if showScore {
 		fmt.Print(" ")
 		if len(result13.Improves) > 0 {
-			fmt.Printf("[%2d Improvements]", len(result13.Improves))
+			fmt.Printf("[%2d改良]", len(result13.Improves))
 		} else {
 			fmt.Print(strings.Repeat(" ", 4))
-			fmt.Print(strings.Repeat("　", 2)) // Full-width space
+			fmt.Print(strings.Repeat("　", 2)) // 全角空白
 		}
 	}
 
-	// Types of waits
+	// 待ち牌タイプ
 	fmt.Print(" ")
 	waitTiles := result13.Waits.AvailableTiles()
 	fmt.Print(util.TilesToStrWithBracket(waitTiles))
@@ -648,7 +630,7 @@ func (r *analysisResult) printWaitsWithImproves13_oneRow() {
 
 	if showImproveDetail {
 		for tile, waits := range result13.Improves {
-			fmt.Printf("Draw %s improves to %s\n", util.Mahjong[tile], waits.String())
+			fmt.Printf("ツモ %s で改良 %s\n", util.Mahjong[tile], waits.String())
 		}
 	}
 }
@@ -670,12 +652,12 @@ func printResults14WithRisk(results14 util.Hand14AnalysisResultList, mixedRiskTa
 	}
 
 	if len(results14[0].OpenTiles) > 0 {
-		fmt.Print("After calling")
+		fmt.Print("鳴き後")
 	}
-	fmt.Println(util.NumberToChineseShanten(results14[0].Result13.Shanten) + ":")
+	fmt.Println(util.NumberToChineseShanten(results14[0].Result13.Shanten) + "：")
 
 	if results14[0].Result13.Shanten == 0 {
-		// Check if the waits are the same but the points are different
+		// 聴牌が同じだが打点が異なるかどうかを確認
 		isDiffPoint := false
 		baseWaits := results14[0].Result13.Waits
 		baseDamaPoint := results14[0].Result13.DamaPoint
@@ -688,13 +670,13 @@ func printResults14WithRisk(results14 util.Hand14AnalysisResultList, mixedRiskTa
 		}
 
 		if isDiffPoint {
-			color.HiGreen("Pay attention to discard choice: points")
+			color.HiGreen("注意: 打点が異なる聴牌選択があります")
 		}
 	}
 
-	// FIXME: How to simplify the discard options when there are many choices?
+	// FIXME: 選択肢が多い場合、何切選択を簡略化する方法？
 	//const maxShown = 10
-	//if len(results14) > maxShown { // Limit the number of outputs
+	//if len(results14) > maxShown { // 出力数を制限
 	//	results14 = results14[:maxShown]
 	//}
 	for _, result := range results14 {
