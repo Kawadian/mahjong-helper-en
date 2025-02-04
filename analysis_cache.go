@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/EndlessCheng/mahjong-helper/util"
 	"github.com/fatih/color"
 )
@@ -10,11 +11,11 @@ type analysisOpType int
 
 const (
 	analysisOpTypeTsumo     analysisOpType = iota
-	analysisOpTypeChiPonKan  // 吃 碰 明杠
-	analysisOpTypeKan        // 加杠 暗杠
+	analysisOpTypeChiPonKan                // Chi Pon Kan
+	analysisOpTypeKan                      // Add Kan Ankan
 )
 
-// TODO: 提醒「此处应该副露，不应跳过」
+// TODO: Remind "You should meld here, not skip"
 
 type analysisCache struct {
 	analysisOpType analysisOpType
@@ -25,7 +26,7 @@ type analysisCache struct {
 	isRiichiWhenDiscard bool
 	meldType            int
 
-	// 用手牌中的什么牌去鸣牌，空就是跳过不鸣
+	// What tile to meld with from the hand, empty means skip meld
 	selfOpenTiles []int
 
 	aiAttackDiscardTile      int
@@ -33,7 +34,7 @@ type analysisCache struct {
 	aiAttackDiscardTileRisk  float64
 	aiDefenceDiscardTileRisk float64
 
-	tenpaiRate []float64 // TODO: 三家听牌率
+	tenpaiRate []float64 // TODO: Tenpai rate of three players
 }
 
 type roundAnalysisCache struct {
@@ -46,7 +47,7 @@ type roundAnalysisCache struct {
 
 func (rc *roundAnalysisCache) print() {
 	const (
-		baseInfo  = "助手正在计算推荐舍牌，请稍等……（计算结果仅供参考）"
+		baseInfo  = "The assistant is calculating the recommended discard tile, please wait... (The result is for reference only)"
 		emptyInfo = "--"
 		sep       = "  "
 	)
@@ -55,7 +56,7 @@ func (rc *roundAnalysisCache) print() {
 	if !done {
 		color.HiGreen(baseInfo)
 	} else {
-		// 检查最后的是否自摸，若为自摸则去掉推荐
+		// Check if the last one is Tsumo, if so, remove the recommendation
 		if len(rc.cache) > 0 {
 			latestCache := rc.cache[len(rc.cache)-1]
 			if latestCache.selfDiscardTile == -1 {
@@ -65,7 +66,7 @@ func (rc *roundAnalysisCache) print() {
 		}
 	}
 
-	fmt.Print("巡目　　")
+	fmt.Print("Round ")
 	if done {
 		for i := range rc.cache {
 			fmt.Printf("%s%2d", sep, i+1)
@@ -87,22 +88,22 @@ func (rc *roundAnalysisCache) print() {
 		fmt.Print(suffix)
 	}
 
-	fmt.Print("自家切牌")
+	fmt.Print("Self Discard")
 	if done {
 		for i, c := range rc.cache {
 			suffix := ""
 			if c.isRiichiWhenDiscard {
-				suffix = "[立直]"
+				suffix = "[Riichi]"
 			} else if c.selfDiscardTile == -1 && i == len(rc.cache)-1 {
-				//suffix = "[自摸]"
-				// TODO: 流局
+				//suffix = "[Tsumo]"
+				// TODO: Draw
 			}
 			printTileInfo(c.selfDiscardTile, c.selfDiscardTileRisk, suffix)
 		}
 	}
 	fmt.Println()
 
-	fmt.Print("进攻推荐")
+	fmt.Print("Attack Recommendation")
 	if done {
 		for _, c := range rc.cache {
 			printTileInfo(c.aiAttackDiscardTile, c.aiAttackDiscardTileRisk, "")
@@ -110,7 +111,7 @@ func (rc *roundAnalysisCache) print() {
 	}
 	fmt.Println()
 
-	fmt.Print("防守推荐")
+	fmt.Print("Defense Recommendation")
 	if done {
 		for _, c := range rc.cache {
 			printTileInfo(c.aiDefenceDiscardTile, c.aiDefenceDiscardTileRisk, "")
@@ -121,7 +122,7 @@ func (rc *roundAnalysisCache) print() {
 	fmt.Println()
 }
 
-// （摸牌后、鸣牌后的）实际舍牌
+// Actual discard tile (after drawing or melding)
 func (rc *roundAnalysisCache) addSelfDiscardTile(tile int, risk float64, isRiichiWhenDiscard bool) {
 	latestCache := rc.cache[len(rc.cache)-1]
 	latestCache.selfDiscardTile = tile
@@ -129,9 +130,9 @@ func (rc *roundAnalysisCache) addSelfDiscardTile(tile int, risk float64, isRiich
 	latestCache.isRiichiWhenDiscard = isRiichiWhenDiscard
 }
 
-// 摸牌时的切牌推荐
+// Discard recommendation when drawing a tile
 func (rc *roundAnalysisCache) addAIDiscardTileWhenDrawTile(attackTile int, defenceTile int, attackTileRisk float64, defenceDiscardTileRisk float64) {
-	// 摸牌，巡目+1
+	// Draw a tile, round +1
 	rc.cache = append(rc.cache, &analysisCache{
 		analysisOpType:           analysisOpTypeTsumo,
 		selfDiscardTile:          -1,
@@ -143,30 +144,30 @@ func (rc *roundAnalysisCache) addAIDiscardTileWhenDrawTile(attackTile int, defen
 	rc.analysisCacheBeforeChiPon = nil
 }
 
-// 加杠 暗杠
+// Add Kan Ankan
 func (rc *roundAnalysisCache) addKan(meldType int) {
-	// latestCache 是摸牌
+	// latestCache is drawing a tile
 	latestCache := rc.cache[len(rc.cache)-1]
 	latestCache.analysisOpType = analysisOpTypeKan
 	latestCache.meldType = meldType
-	// 杠完之后又会摸牌，巡目+1
+	// After Kan, draw a tile again, round +1
 }
 
-// 吃 碰 明杠
+// Chi Pon Kan
 func (rc *roundAnalysisCache) addChiPonKan(meldType int) {
 	if meldType == meldTypeMinkan {
-		// 暂时忽略明杠，巡目不+1，留给摸牌时+1
+		// Temporarily ignore Minkan, round +1 will be handled when drawing a tile
 		return
 	}
-	// 巡目+1
+	// Round +1
 	var newCache *analysisCache
 	if rc.analysisCacheBeforeChiPon != nil {
-		newCache = rc.analysisCacheBeforeChiPon // 见 addPossibleChiPonKan
+		newCache = rc.analysisCacheBeforeChiPon // See addPossibleChiPonKan
 		newCache.analysisOpType = analysisOpTypeChiPonKan
 		newCache.meldType = meldType
 		rc.analysisCacheBeforeChiPon = nil
 	} else {
-		// 此处代码应该不会触发
+		// This code should not be triggered
 		if debugMode {
 			panic("rc.analysisCacheBeforeChiPon == nil")
 		}
@@ -181,7 +182,7 @@ func (rc *roundAnalysisCache) addChiPonKan(meldType int) {
 	rc.cache = append(rc.cache, newCache)
 }
 
-// 吃 碰 杠 跳过
+// Chi Pon Kan Skip
 func (rc *roundAnalysisCache) addPossibleChiPonKan(attackTile int, attackTileRisk float64) {
 	rc.analysisCacheBeforeChiPon = &analysisCache{
 		analysisOpType:          analysisOpTypeChiPonKan,
@@ -195,7 +196,7 @@ func (rc *roundAnalysisCache) addPossibleChiPonKan(attackTile int, attackTileRis
 //
 
 type gameAnalysisCache struct {
-	// 局数 本场数
+	// Round number, Honba number
 	wholeGameCache [][]*roundAnalysisCache
 
 	majsoulRecordUUID string
@@ -204,9 +205,9 @@ type gameAnalysisCache struct {
 }
 
 func newGameAnalysisCache(majsoulRecordUUID string, selfSeat int) *gameAnalysisCache {
-	cache := make([][]*roundAnalysisCache, 3*4) // 最多到西四
+	cache := make([][]*roundAnalysisCache, 3*4) // Up to West 4
 	for i := range cache {
-		cache[i] = make([]*roundAnalysisCache, 100) // 最多连庄
+		cache[i] = make([]*roundAnalysisCache, 100) // Up to 100 consecutive wins
 	}
 	return &gameAnalysisCache{
 		wholeGameCache:    cache,
@@ -217,7 +218,7 @@ func newGameAnalysisCache(majsoulRecordUUID string, selfSeat int) *gameAnalysisC
 
 //
 
-// TODO: 重构成 struct
+// TODO: Refactor into struct
 var (
 	_analysisCacheList = make([]*gameAnalysisCache, 4)
 	_currentSeat       int
@@ -244,47 +245,47 @@ func getCurrentAnalysisCache() *gameAnalysisCache {
 }
 
 func (c *gameAnalysisCache) runMajsoulRecordAnalysisTask(actions majsoulRoundActions) error {
-	// 从第一个 action 中取出局和场
+	// Get the round and honba from the first action
 	if len(actions) == 0 {
-		return fmt.Errorf("数据异常：此局数据为空")
+		return fmt.Errorf("Data error: This round data is empty")
 	}
 
 	newRoundAction := actions[0]
 	data := newRoundAction.Action
 	roundNumber := 4*(*data.Chang) + *data.Ju
 	ben := *data.Ben
-	roundCache := c.wholeGameCache[roundNumber][ben] // TODO: 建议用原子操作
+	roundCache := c.wholeGameCache[roundNumber][ben] // TODO: Suggest using atomic operations
 	if roundCache == nil {
 		roundCache = &roundAnalysisCache{isStart: true}
 		if debugMode {
-			fmt.Println("助手正在计算推荐舍牌…… 创建 roundCache")
+			fmt.Println("The assistant is calculating the recommended discard tile... Creating roundCache")
 		}
 		c.wholeGameCache[roundNumber][ben] = roundCache
 	} else if roundCache.isStart {
 		if debugMode {
-			fmt.Println("无需重复计算")
+			fmt.Println("No need to recalculate")
 		}
 		return nil
 	}
 
-	// 遍历自家舍牌，找到舍牌前的操作
-	// 若为摸牌操作，计算出此时的 AI 进攻舍牌和防守舍牌
-	// 若为鸣牌操作，计算出此时的 AI 进攻舍牌（无进攻舍牌则设为 -1），防守舍牌设为 -1
-	// TODO: 玩家跳过，但是 AI 觉得应鸣牌？
-	majsoulRoundData := &majsoulRoundData{selfSeat: c.selfSeat} // 注意这里是用的一个新的 majsoulRoundData 去计算的，不会有数据冲突
+	// Traverse self discard tiles, find the operation before discard
+	// If it is a draw operation, calculate the AI attack discard and defense discard at this time
+	// If it is a meld operation, calculate the AI attack discard at this time (set to -1 if no attack discard), set defense discard to -1
+	// TODO: Player skips, but AI thinks it should meld?
+	majsoulRoundData := &majsoulRoundData{selfSeat: c.selfSeat} // Note that a new majsoulRoundData is used here for calculation, there will be no data conflict
 	majsoulRoundData.roundData = newGame(majsoulRoundData)
 	majsoulRoundData.roundData.gameMode = gameModeRecordCache
 	majsoulRoundData.skipOutput = true
 	for i, action := range actions[:len(actions)-1] {
 		if c.majsoulRecordUUID != getMajsoulCurrentRecordUUID() {
 			if debugMode {
-				fmt.Println("用户退出该牌谱")
+				fmt.Println("User exited this record")
 			}
-			// 提前退出，减少不必要的计算
+			// Exit early to reduce unnecessary calculations
 			return nil
 		}
 		if debugMode {
-			fmt.Println("助手正在计算推荐舍牌…… action", i)
+			fmt.Println("The assistant is calculating the recommended discard tile... action", i)
 		}
 		majsoulRoundData.msg = action.Action
 		majsoulRoundData.analysis()
@@ -293,7 +294,7 @@ func (c *gameAnalysisCache) runMajsoulRecordAnalysisTask(actions majsoulRoundAct
 
 	if c.majsoulRecordUUID != getMajsoulCurrentRecordUUID() {
 		if debugMode {
-			fmt.Println("用户退出该牌谱")
+			fmt.Println("User exited this record")
 		}
 		return nil
 	}
